@@ -1,8 +1,9 @@
 stages:
-  - train_model
   - lint
+  - train_model
   - test
   - build
+  - deploy
 
 variables:
   DOCKER_IMAGE_NAME: mlops_app
@@ -13,29 +14,24 @@ before_script:
   - pip install -r requirements.txt
   - dvc pull
 
-train_model:
-  stage: train_model
-  script:
-    - python -m src.services.model_pipeline.train_model
-  artifacts:
-    paths:
-      - models/
-
 lint:
   stage: lint
   script:
     - black --check src tests
     - mypy src tests
 
+train_model:
+  stage: train_model
+  script:
+    - python -m src.services.model_pipeline.pipeline
+  artifacts:
+    paths:
+      - models/
+
 test:
   stage: test
   script:
-    - pytest tests
-
-# data_quality:
-#   stage: test
-#   script:
-#     - great_expectations checkpoint run <checkpoint_name>
+    - pytest tests/
 
 build:
   stage: build
@@ -44,4 +40,14 @@ build:
     - docker:dind
   script:
     - docker build -t $DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG .
-    - docker push registry.gitlab.com/msrbl-group/MLOps_team21/$DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG
+
+deploy:
+  stage: deploy
+  image: docker:latest
+  services:
+    - docker:dind
+  script:
+    - echo "Pushing image to DockerHub/GitLab Registry..."
+    # docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    # docker tag $DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG $CI_REGISTRY/$CI_PROJECT_NAMESPACE/$DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG
+    # docker push $CI_REGISTRY/$CI_PROJECT_NAMESPACE/$DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG

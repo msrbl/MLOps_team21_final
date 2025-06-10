@@ -15,4 +15,4 @@ if __name__ == "__main__":
     if not dataset_path.exists():
         raise FileNotFoundError(f"Dataset not found at {dataset_path}")
     
-    run_pipeline(dataset_path)
+    run_pipeline(str(dataset_path))
