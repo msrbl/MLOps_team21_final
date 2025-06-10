@@ -1,5 +1,13 @@
 pipeline {
-    agent none 
+    agent {
+        docker {
+        image 'python:3.11-slim'
+        args  '--network host \
+                --user 0:0 \
+                -e HOME=/root \
+                -v /var/run/docker.sock:/var/run/docker.sock'
+        }
+    }
 
     environment {
         HOME              = '/root'  
@@ -9,10 +17,6 @@ pipeline {
     }
     stages {
         stage('Setup Python venv') {
-            agent {
-                docker { image 'python:3.11-slim'
-                        args '--network host --user 0:0 -e HOME=/root -v /var/run/docker.sock:/var/run/docker.sock' }
-            }
             steps {
                 sh '''
                     set -e
@@ -26,10 +30,6 @@ pipeline {
         }
 
         // stage('Lint') {
-                // agent {
-                //     docker { image 'python:3.11-slim'
-                //             args '--network host --user 0:0 -e HOME=/root -v /var/run/docker.sock:/var/run/docker.sock' }
-                // }
         //     steps {
         //         echo '=== Running Linting ==='
         //         withCredentials([file(credentialsId: 'gdrive-sa', variable: 'SA_JSON')]) {
@@ -45,10 +45,6 @@ pipeline {
         // }
 
         stage('Train Model') {
-            agent {
-                docker { image 'python:3.11-slim'
-                        args '--network host --user 0:0 -e HOME=/root -v /var/run/docker.sock:/var/run/docker.sock' }
-            }
             steps {
                 echo '=== Training Model ==='
                 withCredentials([file(credentialsId: 'gdrive-sa', variable: 'SA_JSON')]) {
@@ -71,10 +67,6 @@ pipeline {
         }
 
         stage('Test') {
-            agent {
-                docker { image 'python:3.11-slim'
-                        args '--network host --user 0:0 -e HOME=/root -v /var/run/docker.sock:/var/run/docker.sock' }
-            }
             steps {
                 echo '=== Running Tests ==='
                 withCredentials([file(credentialsId: 'gdrive-sa', variable: 'SA_JSON')]) {
@@ -92,27 +84,30 @@ pipeline {
         }
 
         stage('Build Docker Image') {
-            agent {
-                docker { image 'docker:24'
-                        args '--network host --user 0:0 -e HOME=/root -v /var/run/docker.sock:/var/run/docker.sock' }
-            }
             steps {
                 script {
-                    appImage = docker.build("${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}")
+                    docker.image('docker:24').inside(
+                        '--network host -e HOME=/root -v /var/run/docker.sock:/var/run/docker.sock'
+                    ) {
+                        sh "docker build -t ${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG} ."
+                    }
                 }
             }
         }
-
         stage('Deploy') {
-            agent {
-                docker { image 'docker:24'
-                        args '--network host --user 0:0 -e HOME=/root -v /var/run/docker.sock:/var/run/docker.sock' }
-            }
              steps {
                 script {
-                    docker.withRegistry("https://${DOCKER_REGISTRY}", 'docker-credentials') {
-                        appImage.push()
-                        appImage.push('latest')
+                    docker.image('docker:24').inside(
+                        '--network host -e HOME=/root -v /var/run/docker.sock:/var/run/docker.sock'
+                    ) {
+                        docker.withRegistry("https://${DOCKER_REGISTRY}", 'docker-credentials') {
+                            sh "docker push ${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}"
+                            sh """
+                                docker tag ${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG} \
+                                        ${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:latest
+                                docker push ${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:latest
+                            """
+                        }
                     }
                 }
             }
