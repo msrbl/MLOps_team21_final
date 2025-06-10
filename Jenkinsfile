@@ -1,10 +1,5 @@
 pipeline {
-    agent {
-        docker {
-            image 'python:3.11-slim'
-            args  '--network host --user 0:0 -e HOME=/root -v /var/run/docker.sock:/var/run/docker.sock'
-        }
-    }
+    agent none 
 
     environment {
         HOME              = '/root'  
@@ -14,6 +9,10 @@ pipeline {
     }
     stages {
         stage('Setup Python venv') {
+            agent {
+                docker { image 'python:3.11-slim'
+                        args '--network host --user 0:0 -e HOME=/root -v /var/run/docker.sock:/var/run/docker.sock' }
+            }
             steps {
                 sh '''
                     set -e
@@ -27,6 +26,10 @@ pipeline {
         }
 
         // stage('Lint') {
+                // agent {
+                //     docker { image 'python:3.11-slim'
+                //             args '--network host --user 0:0 -e HOME=/root -v /var/run/docker.sock:/var/run/docker.sock' }
+                // }
         //     steps {
         //         echo '=== Running Linting ==='
         //         withCredentials([file(credentialsId: 'gdrive-sa', variable: 'SA_JSON')]) {
@@ -42,6 +45,10 @@ pipeline {
         // }
 
         stage('Train Model') {
+            agent {
+                docker { image 'python:3.11-slim'
+                        args '--network host --user 0:0 -e HOME=/root -v /var/run/docker.sock:/var/run/docker.sock' }
+            }
             steps {
                 echo '=== Training Model ==='
                 withCredentials([file(credentialsId: 'gdrive-sa', variable: 'SA_JSON')]) {
@@ -64,6 +71,10 @@ pipeline {
         }
 
         stage('Test') {
+            agent {
+                docker { image 'python:3.11-slim'
+                        args '--network host --user 0:0 -e HOME=/root -v /var/run/docker.sock:/var/run/docker.sock' }
+            }
             steps {
                 echo '=== Running Tests ==='
                 withCredentials([file(credentialsId: 'gdrive-sa', variable: 'SA_JSON')]) {
@@ -82,14 +93,8 @@ pipeline {
 
         stage('Build Docker Image') {
             agent {
-                docker {
-                    image 'docker:24'
-                    args  '''
-                    --network host
-                    -v /var/run/docker.sock:/var/run/docker.sock \
-                    -e HOME=/root
-                    '''
-                }
+                docker { image 'docker:24'
+                        args '--network host --user 0:0 -e HOME=/root -v /var/run/docker.sock:/var/run/docker.sock' }
             }
             steps {
                 script {
@@ -100,10 +105,8 @@ pipeline {
 
         stage('Deploy') {
             agent {
-                docker {
-                    image 'docker:24'
-                    args  '--network host -v /var/run/docker.sock:/var/run/docker.sock -e HOME=/root'
-                }
+                docker { image 'docker:24'
+                        args '--network host --user 0:0 -e HOME=/root -v /var/run/docker.sock:/var/run/docker.sock' }
             }
              steps {
                 script {
