@@ -73,14 +73,6 @@ docker run -d -p 8000:8000 \
 * Данные `dvc pull` аутентифицируются через Secret-file `service_account.json`.
 * Учётка Docker Hub хранится в **Credentials** с ID `docker-credentials`.
 
-Скриншоты хранятся в папке **docs/**:
-
-| Этап          | Скрин                                          |
-| ------------- | ---------------------------------------------- |
-| Успешный билд | ![Build green](docs/jenkins_build_success.png) |
-| Граф Pipeline | ![Pipeline view](docs/jenkins_pipeline.png)    |
-| Пуш образа    | ![Push log](docs/jenkins_docker_push.png)      |
-
 ---
 
 ## 📂 Project structure
