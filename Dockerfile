@@ -11,4 +11,4 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 COPY . .
 
-CMD dvc pull && uvicorn src.app.main:app --host 0.0.0.0 --port 8000
+CMD dvc pull && uvicorn src:app --host 0.0.0.0 --port 8000
