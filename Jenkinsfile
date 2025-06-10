@@ -1,6 +1,6 @@
 pipeline {
     agent {
-        python {
+        docker {
             image 'python:3.11-slim'
             args  '--user 0:0 -e HOME=/root -v /var/run/docker.sock:/var/run/docker.sock'
         }
