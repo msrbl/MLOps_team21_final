@@ -4,4 +4,3 @@
 ['remote "myremote"']
     url = gdrive://1EJTRFPHASEjzFPHVkiiF6aAAdCEmXolv
     gdrive_use_service_account = true
-    gdrive_service_account_json_file_path = D:\university\Semester 2\MLOps_team21_final\service_account.json
