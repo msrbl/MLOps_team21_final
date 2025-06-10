@@ -3,11 +3,13 @@ from src import app
 
 client = TestClient(app)
 
+
 def test_healthcheck():
     response = client.get("/healthcheck")
     assert response.status_code == 200
     assert response.json() == {"status": "ok"}
-    
+
+
 def test_get_predictions():
     payload = {
         "Pclass": 1,
@@ -15,12 +17,13 @@ def test_get_predictions():
         "Age": 10,
         "Siblings_Spouses_Aboard": 2,
         "Parents_Children_Aboard": 3,
-        "Fare": 30.0
+        "Fare": 30.0,
     }
-    
+
     response = client.post("/get-predictions", json=payload)
     assert response.status_code == 200
     assert "Survived" in response.json()
+
 
 def test_invalid_payload():
     payload = {
@@ -28,8 +31,7 @@ def test_invalid_payload():
         "Sex": "unknown",
         "Age": -5,
     }
-    
+
     response = client.post("/get-predictions", json=payload)
     assert response.status_code == 422  # Unprocessable Entity
     assert "detail" in response.json()
-    

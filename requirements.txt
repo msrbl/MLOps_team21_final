@@ -10,6 +10,7 @@ mypy
 dvc[gs]
 dvc-gdrive
 
+pandas-stubs
 pandas
 numpy
 joblib

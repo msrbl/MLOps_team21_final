@@ -1,3 +1,4 @@
+from pathlib import Path
 import pandas as pd
 import numpy as np
 
@@ -39,7 +40,7 @@ def save_dataset(df: pd.DataFrame, output_path: str) -> None:
     df.to_csv(output_path, index=False)
     print(f"Dataset saved to {output_path}")
 
-def generate_datasets(dataset_path: str = settings.DATA_DIR / "titanic.csv") -> None:
+def generate_datasets(dataset_path: Path = settings.DATA_DIR / "titanic.csv") -> None:
     try:
         df = pd.read_csv(dataset_path)
     except FileNotFoundError:

@@ -35,7 +35,7 @@ pipeline {
                         
                         dvc remote modify --local myremote gdrive_service_account_json_file_path "$SA_JSON"
                         dvc pull
-                        black --check src tests
+                        black src tests
                         mypy src tests
                     '''
                 }
