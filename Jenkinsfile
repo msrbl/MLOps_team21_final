@@ -2,11 +2,12 @@ pipeline {
     agent {
         docker {
             image 'python:3.11-slim'
-            args  '-v /var/run/docker.sock:/var/run/docker.sock'
+            args  '--user 0:0 -e HOME=/root -v /var/run/docker.sock:/var/run/docker.sock'
         }
     }
 
     environment {
+        HOME              = '/root'  
         DOCKER_IMAGE_NAME = 'team21/model'
         DOCKER_IMAGE_TAG  = "${env.BUILD_NUMBER}"
         DOCKER_REGISTRY   = 'docker.io'
