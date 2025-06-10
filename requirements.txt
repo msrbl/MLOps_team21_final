@@ -1,4 +1,8 @@
-pandas
-scikit-learn
-requests
-joblib
+fastapi[standard]
+uvicorn
+pydantic
+pydantic_settings
+pytest
+black
+mypy
+dvc[gs]

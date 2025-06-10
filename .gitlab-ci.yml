@@ -1,0 +1,37 @@
+stages:
+  - test
+  - build
+  - push
+
+variables:
+  DOCKER_DRIVER: overlay2
+
+test:
+  stage: test
+  image: python:3.12
+  before_script:
+    - pip install -r requirements.txt
+  script:
+    - flake8 src/
+    - mypy src/
+    - pytest tests/
+
+build:
+  stage: build
+  image: docker:latest
+  services:
+    - docker:dind
+  script:
+    - docker build -t mlops-pipeline-app .
+
+push:
+  stage: push
+  image: docker:latest
+  services:
+    - docker:dind
+  script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin $CI_REGISTRY
+    - docker tag mlops-pipeline-app $CI_REGISTRY_IMAGE:latest
+    - docker push $CI_REGISTRY_IMAGE:latest
+  only:
+    - main
