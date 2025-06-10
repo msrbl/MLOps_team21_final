@@ -2,7 +2,7 @@ pipeline {
     agent {
         docker {
             image 'python:3.11-slim'
-            args  '--user 0:0 -e HOME=/root -v /var/run/docker.sock:/var/run/docker.sock'
+            args  '--network host --user 0:0 -e HOME=/root -v /var/run/docker.sock:/var/run/docker.sock'
         }
     }
 
@@ -85,6 +85,7 @@ pipeline {
                 docker {
                     image 'docker:24-cli'
                     args  '''
+                    --network host
                     -v /var/run/docker.sock:/var/run/docker.sock \
                     -e HOME=/root
                     '''
@@ -102,7 +103,7 @@ pipeline {
             agent {
                 docker {
                     image 'docker:24-cli'
-                    args  '-v /var/run/docker.sock:/var/run/docker.sock -e HOME=/root'
+                    args  '--network host -v /var/run/docker.sock:/var/run/docker.sock -e HOME=/root'
                 }
             }
              steps {
