@@ -32,8 +32,8 @@ pipeline {
                     sh '''
                         set -e
                         . venv/bin/activate
-                        export GDRIVE_USE_SERVICE_ACCOUNT=true
-                        export GDRIVE_SERVICE_ACCOUNT_JSON_FILE_PATH="$SA_JSON"
+                        
+                        dvc remote modify --local myremote gdrive_service_account_json_file_path "$SA_JSON"
                         dvc pull
                         black --check src tests
                         mypy src tests
@@ -49,8 +49,8 @@ pipeline {
                     sh '''
                         set -e
                         . venv/bin/activate
-                        export GDRIVE_USE_SERVICE_ACCOUNT=true
-                        export GDRIVE_SERVICE_ACCOUNT_JSON_FILE_PATH="$SA_JSON"
+                        
+                        dvc remote modify --local myremote gdrive_service_account_json_file_path "$SA_JSON"
                         dvc pull
                         python -m src.services.model_pipeline.pipeline
 
@@ -71,8 +71,8 @@ pipeline {
                     sh '''
                         set -e
                         . venv/bin/activate
-                        export GDRIVE_USE_SERVICE_ACCOUNT=true
-                        export GDRIVE_SERVICE_ACCOUNT_JSON_FILE_PATH="$SA_JSON"
+                        
+                        dvc remote modify --local myremote gdrive_service_account_json_file_path "$SA_JSON"
                         dvc pull
                         pytest tests/
 
