@@ -21,7 +21,7 @@ pipeline {
                     . venv/bin/activate
                     pip install --upgrade pip --no-cache-dir
                     pip install -r requirements.txt --no-cache-dir
-                    export PYTHONPATH=$PYTHONPATH:$WORKSPACE
+                    pip install --no-cache-dir -e .
                 '''
             }
         }
