@@ -1,5 +1,13 @@
+import sys
+import os
+
 from fastapi.testclient import TestClient
+
 from src import app
+
+root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if root_dir not in sys.path:
+    sys.path.insert(0, root_dir)
 
 client = TestClient(app)
 
@@ -15,8 +23,8 @@ def test_get_predictions():
         "Pclass": 1,
         "Sex": "male",
         "Age": 10,
-        "Siblings_Spouses_Aboard": 2,
-        "Parents_Children_Aboard": 3,
+        "Siblings/Spouses_Aboard": 2,
+        "Parents/Children_Aboard": 3,
         "Fare": 30.0,
     }
 
