@@ -32,9 +32,7 @@ pipeline {
                     sh '''
                         set -e
                         . venv/bin/activate
-                        
-                        dvc remote modify --local myremote gdrive_service_account_json_file_path "$SA_JSON"
-                        dvc pull
+
                         // black src tests
                         // mypy src tests
                     '''
