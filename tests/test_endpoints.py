@@ -23,8 +23,8 @@ def test_get_predictions():
         "Pclass": 1,
         "Sex": "male",
         "Age": 10,
-        "Siblings/Spouses_Aboard": 2,
-        "Parents/Children_Aboard": 3,
+        "Siblings_Spouses_Aboard": 2,
+        "Parents_Children_Aboard": 3,
         "Fare": 30.0,
     }
 
