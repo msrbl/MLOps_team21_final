@@ -1,0 +1,4 @@
+[project]
+name = "mlops_team21"
+version = "0.0.1"
+packages = ["src"]
