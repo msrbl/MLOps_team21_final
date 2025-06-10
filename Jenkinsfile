@@ -93,8 +93,7 @@ pipeline {
             }
             steps {
                 script {
-                    def fullName = "${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}"
-                    appImage = docker.build("${fullName}:${DOCKER_IMAGE_TAG}")
+                    appImage = docker.build("${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}")
                 }
             }
         }
@@ -109,7 +108,7 @@ pipeline {
              steps {
                 script {
                     docker.withRegistry("https://${DOCKER_REGISTRY}", 'docker-credentials') {
-                        appImage.push("${DOCKER_IMAGE_TAG}")
+                        appImage.push()
                         appImage.push('latest')
                     }
                 }
