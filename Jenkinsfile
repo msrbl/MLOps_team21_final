@@ -25,20 +25,20 @@ pipeline {
             }
         }
 
-        stage('Lint') {
-            steps {
-                echo '=== Running Linting ==='
-                withCredentials([file(credentialsId: 'gdrive-sa', variable: 'SA_JSON')]) {
-                    sh '''
-                        set -e
-                        . venv/bin/activate
+        // stage('Lint') {
+        //     steps {
+        //         echo '=== Running Linting ==='
+        //         withCredentials([file(credentialsId: 'gdrive-sa', variable: 'SA_JSON')]) {
+        //             sh '''
+        //                 set -e
+        //                 . venv/bin/activate
 
-                        // black src tests
-                        // mypy src tests
-                    '''
-                }
-            }
-        }
+        //                 black src tests
+        //                 mypy src tests
+        //             '''
+        //         }
+        //     }
+        // }
 
         stage('Train Model') {
             steps {
