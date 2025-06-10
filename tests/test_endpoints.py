@@ -33,5 +33,5 @@ def test_invalid_payload():
     }
 
     response = client.post("/get-predictions", json=payload)
-    assert response.status_code == 422  # Unprocessable Entity
+    assert response.status_code == 422
     assert "detail" in response.json()
