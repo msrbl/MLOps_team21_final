@@ -28,25 +28,34 @@ pipeline {
         stage('Lint') {
             steps {
                 echo '=== Running Linting ==='
-                sh '''
-                    set -e
-                    . venv/bin/activate
-                    dvc pull
-                    black --check src tests
-                    mypy src tests
-                '''
+                withCredentials([file(credentialsId: 'gdrive-sa', variable: 'SA_JSON')]) {
+                    sh '''
+                        set -e
+                        . venv/bin/activate
+                        export DVC_GDRIVE_USE_SERVICE_ACCOUNT=true
+                        export DVC_GDRIVE_SERVICE_ACCOUNT_JSON_FILE_PATH="$SA_JSON"
+                        dvc pull
+                        black --check src tests
+                        mypy src tests
+                    '''
+                }
             }
         }
 
         stage('Train Model') {
             steps {
                 echo '=== Training Model ==='
-                sh '''
-                    set -e
-                    . venv/bin/activate
-                    dvc pull
-                    python -m src.services.model_pipeline.pipeline
-                '''
+                withCredentials([file(credentialsId: 'gdrive-sa', variable: 'SA_JSON')]) {
+                    sh '''
+                        set -e
+                        . venv/bin/activate
+                        export DVC_GDRIVE_USE_SERVICE_ACCOUNT=true
+                        export DVC_GDRIVE_SERVICE_ACCOUNT_JSON_FILE_PATH="$SA_JSON"
+                        dvc pull
+                        python -m src.services.model_pipeline.pipeline
+
+                    '''
+                }
             }
             post {
                 always {
@@ -58,12 +67,17 @@ pipeline {
         stage('Test') {
             steps {
                 echo '=== Running Tests ==='
-                sh '''
-                    set -e
-                    . venv/bin/activate
-                    dvc pull
-                    pytest tests/
-                '''
+                withCredentials([file(credentialsId: 'gdrive-sa', variable: 'SA_JSON')]) {
+                    sh '''
+                        set -e
+                        . venv/bin/activate
+                        export DVC_GDRIVE_USE_SERVICE_ACCOUNT=true
+                        export DVC_GDRIVE_SERVICE_ACCOUNT_JSON_FILE_PATH="$SA_JSON"
+                        dvc pull
+                        pytest tests/
+
+                    '''
+                }
             }
         }
 
