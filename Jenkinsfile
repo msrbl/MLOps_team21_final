@@ -15,10 +15,11 @@ pipeline {
         stage('Setup Python venv') {
             steps {
                 sh '''
-                    python3 -m venv venv
+                    set -e
+                    python -m venv venv
                     . venv/bin/activate
-                    pip install --upgrade pip
-                    pip install -r requirements.txt
+                    pip install --upgrade pip --no-cache-dir
+                    pip install -r requirements.txt --no-cache-dir
                 '''
             }
         }
@@ -27,6 +28,8 @@ pipeline {
             steps {
                 echo '=== Running Linting ==='
                 sh '''
+                    set -e
+                    . venv/bin/activate
                     dvc pull
                     black --check src tests
                     mypy src tests
@@ -38,8 +41,8 @@ pipeline {
             steps {
                 echo '=== Training Model ==='
                 sh '''
-                    python -m pip install --upgrade pip
-                    pip install -r requirements.txt
+                    set -e
+                    . venv/bin/activate
                     dvc pull
                     python -m src.services.model_pipeline.pipeline
                 '''
@@ -55,8 +58,8 @@ pipeline {
             steps {
                 echo '=== Running Tests ==='
                 sh '''
-                    python -m pip install --upgrade pip
-                    pip install -r requirements.txt
+                    set -e
+                    . venv/bin/activate
                     dvc pull
                     pytest tests/
                 '''
@@ -72,20 +75,22 @@ pipeline {
         stage('Deploy') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'docker-credentials',
-                                                    usernameVariable: 'DOCKER_USER',
-                                                    passwordVariable: 'DOCKER_PASS')]) {
+                                                  usernameVariable: 'DOCKER_USER',
+                                                  passwordVariable: 'DOCKER_PASS')]) {
                     sh '''
+                        set -e
                         echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
                         docker tag $DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG $DOCKER_REGISTRY/$DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG
                         docker push $DOCKER_REGISTRY/$DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG
+                        docker logout $DOCKER_REGISTRY
                     '''
                 }
             }
         }
-  }
-  post {
-    always {
-      archiveArtifacts artifacts: 'data/processed/**/*', fingerprint: true
     }
-  }
+    post {
+        always {
+            archiveArtifacts artifacts: 'data/processed/**/*', fingerprint: true
+        }
+    }
 }
