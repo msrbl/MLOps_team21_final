@@ -15,9 +15,6 @@ class Settings(BaseSettings):
 
     MODEL_DIR: ClassVar[Path] = ROOT_DIR / "models"
     MODEL_DIR.mkdir(exist_ok=True)
-
-    REPORT_DIR: ClassVar[Path] = ROOT_DIR / "reports"
-    REPORT_DIR.mkdir(exist_ok=True)
     
     DATASET_URL: str = "https://web.stanford.edu/class/archive/cs/cs109/cs109.1166/stuff/titanic.csv"
     

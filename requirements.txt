@@ -3,7 +3,14 @@ uvicorn
 pydantic
 pydantic_settings
 pytest
+
 black
 mypy
+
 dvc[gs]
 dvc-gdrive
+
+pandas
+numpy
+joblib
+scikit-learn

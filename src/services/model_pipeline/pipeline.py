@@ -1,7 +1,6 @@
 from src.services.model_pipeline.test_model import proceed_testing
 from src.services.model_pipeline.preprocess_data import preprocess_dataset
 from src.services.model_pipeline.train_model import train_and_save_model
-
 from src.config import settings
 
 def run_pipeline(dataset_path: str) -> None:
