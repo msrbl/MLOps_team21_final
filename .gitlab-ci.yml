@@ -1,20 +1,41 @@
 stages:
+  - train_model
+  - lint
   - test
   - build
-  - push
 
 variables:
-  DOCKER_DRIVER: overlay2
+  DOCKER_IMAGE_NAME: mlops_app
+  DOCKER_IMAGE_TAG: latest
+
+before_script:
+  - python -m pip install --upgrade pip
+  - pip install -r requirements.txt
+  - dvc pull
+
+train_model:
+  stage: train_model
+  script:
+    - python -m src.services.model_pipeline.train_model
+  artifacts:
+    paths:
+      - models/
+
+lint:
+  stage: lint
+  script:
+    - black --check src tests
+    - mypy src tests
 
 test:
   stage: test
-  image: python:3.12
-  before_script:
-    - pip install -r requirements.txt
   script:
-    - flake8 src/
-    - mypy src/
-    - pytest tests/
+    - pytest tests
+
+# data_quality:
+#   stage: test
+#   script:
+#     - great_expectations checkpoint run <checkpoint_name>
 
 build:
   stage: build
@@ -22,16 +43,5 @@ build:
   services:
     - docker:dind
   script:
-    - docker build -t mlops-pipeline-app .
-
-push:
-  stage: push
-  image: docker:latest
-  services:
-    - docker:dind
-  script:
-    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin $CI_REGISTRY
-    - docker tag mlops-pipeline-app $CI_REGISTRY_IMAGE:latest
-    - docker push $CI_REGISTRY_IMAGE:latest
-  only:
-    - main
+    - docker build -t $DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG .
+    - docker push registry.gitlab.com/msrbl-group/MLOps_team21/$DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG
