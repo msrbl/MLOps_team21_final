@@ -1,6 +1,6 @@
 pipeline {
     agent {
-        docker {
+        python {
             image 'python:3.11-slim'
             args  '--user 0:0 -e HOME=/root -v /var/run/docker.sock:/var/run/docker.sock'
         }
@@ -81,6 +81,15 @@ pipeline {
         }
 
         stage('Build Docker Image') {
+            agent {
+                docker {
+                    image 'docker:24-cli'
+                    args  '''
+                    -v /var/run/docker.sock:/var/run/docker.sock \
+                    -e HOME=/root
+                    '''
+                }
+            }
             steps {
                 script {
                     def fullName = "${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}"
@@ -90,6 +99,12 @@ pipeline {
         }
 
         stage('Deploy') {
+            agent {
+                docker {
+                    image 'docker:24-cli'
+                    args  '-v /var/run/docker.sock:/var/run/docker.sock -e HOME=/root'
+                }
+            }
              steps {
                 script {
                     docker.withRegistry("https://${DOCKER_REGISTRY}", 'docker-credentials') {
