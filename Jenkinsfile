@@ -1,7 +1,7 @@
 pipeline {
     agent {
         docker {
-            image 'docker:24-cli-python3.11'
+            image 'python:3.11-slim'
             args  '--user 0:0 -e HOME=/root -v /var/run/docker.sock:/var/run/docker.sock'
         }
     }
@@ -82,22 +82,20 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t $DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG .'
+                script {
+                    def fullName = "${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}"
+                    appImage = docker.build("${fullName}:${DOCKER_IMAGE_TAG}")
+                }
             }
         }
 
         stage('Deploy') {
-            steps {
-                withCredentials([usernamePassword(credentialsId: 'docker-credentials',
-                                                  usernameVariable: 'DOCKER_USER',
-                                                  passwordVariable: 'DOCKER_PASS')]) {
-                    sh '''
-                        set -e
-                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-                        docker tag $DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG $DOCKER_REGISTRY/$DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG
-                        docker push $DOCKER_REGISTRY/$DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG
-                        docker logout $DOCKER_REGISTRY
-                    '''
+             steps {
+                script {
+                    docker.withRegistry("https://${DOCKER_REGISTRY}", 'docker-credentials') {
+                        appImage.push("${DOCKER_IMAGE_TAG}")
+                        appImage.push('latest')
+                    }
                 }
             }
         }
