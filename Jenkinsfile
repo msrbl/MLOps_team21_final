@@ -83,7 +83,7 @@ pipeline {
         stage('Build Docker Image') {
             agent {
                 docker {
-                    image 'docker:24-cli'
+                    image 'docker:24'
                     args  '''
                     --network host
                     -v /var/run/docker.sock:/var/run/docker.sock \
@@ -101,7 +101,7 @@ pipeline {
         stage('Deploy') {
             agent {
                 docker {
-                    image 'docker:24-cli'
+                    image 'docker:24'
                     args  '--network host -v /var/run/docker.sock:/var/run/docker.sock -e HOME=/root'
                 }
             }
