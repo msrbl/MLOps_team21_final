@@ -44,7 +44,7 @@ mypy src tests
 pytest -q
 
 # 4. Запускаем API
-uvicorn src.app:app --reload
+uvicorn src:app --reload
 # →  http://127.0.0.1:8000/docs 
 ```
 

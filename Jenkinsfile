@@ -2,7 +2,13 @@ pipeline {
     agent {
         docker {
             image 'python:3.11-slim'
-            args  '--user 0:0 -e HOME=/root -v /var/run/docker.sock:/var/run/docker.sock'
+            args  '''
+                --user 0:0
+                -e HOME=/root
+                -v /var/run/docker.sock:/var/run/docker.sock
+                --env TZ=Etc/UTC
+                --tmpfs /run:rw,size=64m
+            '''
         }
     }
 
@@ -22,6 +28,7 @@ pipeline {
                     pip install --upgrade pip --no-cache-dir
                     pip install -r requirements.txt --no-cache-dir
                     pip install --no-cache-dir -e .
+                    apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata
                 '''
             }
         }
