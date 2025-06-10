@@ -55,13 +55,13 @@ def test_sex_values(csv_file):
     ), f"Unexpected values in 'Sex' column in {csv_file}: {unique_vals}"
 
 
-# @pytest.mark.parametrize("csv_file", csv_files)
-# def test_no_nan_in_required_columns(csv_file):
-#     df = pd.read_csv(csv_file)
-#     for col in required_columns:
-#         assert df[col].isnull().sum() < len(
-#             df
-#         ), f"All values missing in column '{col}' in {csv_file}"
+@pytest.mark.parametrize("csv_file", csv_files)
+def test_no_nan_in_required_columns(csv_file):
+    df = pd.read_csv(csv_file)
+    for col in required_columns:
+        assert df[col].isnull().sum() < len(
+            df
+        ), f"All values missing in column '{col}' in {csv_file}"
 
 
 @pytest.mark.parametrize("csv_file", csv_files)
