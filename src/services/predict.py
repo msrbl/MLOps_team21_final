@@ -18,7 +18,7 @@ def predict_passenger(
     Делает предсказание по полям пассажира с помощью модели из settings.MODEL_DIR.
     """
     sex_map = {"male": 0, "female": 1}
-    Sex = sex_map.get(Sex, 0)
+    sex_mapped = sex_map.get(Sex, 0)
 
     if Age < 16:
         Age_binned = 0
@@ -35,7 +35,7 @@ def predict_passenger(
         [
             {
                 "Pclass": Pclass,
-                "Sex": Sex,
+                "Sex": sex_mapped,
                 "Age": Age,
                 "Siblings/Spouses_Aboard": Siblings_Spouses_Aboard,
                 "Parents/Children_Aboard": Parents_Children_Aboard,

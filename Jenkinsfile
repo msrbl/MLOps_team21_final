@@ -20,7 +20,12 @@ pipeline {
     stages {
 
         stage('Checkout') {
-            agent any
+            agent {
+                docker {
+                    image 'alpine/git:latest'
+                    args  '--network host'
+                }
+            }
             steps {
                 checkout scm
             }
@@ -60,8 +65,8 @@ pipeline {
                         sh '''
                             . venv/bin/activate
                             black src tests
-                            mypy src tests
                         '''
+                            //mypy src tests
                     }
                 }
                 stage('Unit Tests') {

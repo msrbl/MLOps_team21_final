@@ -10,3 +10,7 @@ dependencies = []
 
 [tool.setuptools.packages.find]
 where = ["."]
+
+[[tool.mypy.overrides]]
+module = ["foobar.*"]
+ignore_missing_imports = true
