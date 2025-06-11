@@ -18,6 +18,7 @@ pipeline {
     stages {
 
         stage('Checkout') {
+            agent { label 'any' }
             steps {
                 checkout scm
             }
@@ -53,8 +54,8 @@ pipeline {
                             set -e
                             . venv/bin/activate
                             black src tests
+                            mypy src tests --follow-untyped-imports
                         '''
-                            //mypy src tests
                     }
                 }
                 stage('Unit Tests') {
