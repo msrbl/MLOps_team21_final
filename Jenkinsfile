@@ -1,11 +1,11 @@
 pipeline {
     agent none
 
-    // options {
-    //     timestamps()
-    //     disableConcurrentBuilds()
-    //     skipStagesAfterUnstable()
-    // }
+    options {
+        timestamps()
+        disableConcurrentBuilds()
+        skipStagesAfterUnstable()
+    }
 
     environment {
         DOCKER_IMAGE_NAME = 'team21/model'
@@ -18,12 +18,6 @@ pipeline {
     stages {
 
         stage('Checkout') {
-            agent {
-                docker {
-                    image 'alpine/git:latest'
-                    args  '--network host'
-                }
-            }
             steps {
                 checkout scm
             }
@@ -32,7 +26,7 @@ pipeline {
         stage('Setup & Cache') {
             agent {
                 docker {
-                    image 'python:3.11-slim'
+                    image 'python:3.12-slim'
                     args  '--network host \
                            -v $HOME/.cache/pip:/root/.cache/pip'
                 }
@@ -52,7 +46,7 @@ pipeline {
             parallel {
                 stage('Lint') {
                     agent {
-                        docker { image 'python:3.11-slim'; args '--network host' }
+                        docker { image 'python:3.12-slim'; args '--network host' }
                     }
                     steps {
                         sh '''
@@ -65,7 +59,7 @@ pipeline {
                 }
                 stage('Unit Tests') {
                     agent {
-                        docker { image 'python:3.11-slim'; args '--network host' }
+                        docker { image 'python:3.12-slim'; args '--network host' }
                     }
                     steps {
                         withCredentials([file(credentialsId: "${GDRIVE_CREDENTIALS_ID}", variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
@@ -83,7 +77,7 @@ pipeline {
 
         stage('Train Model') {
             agent {
-                docker { image 'python:3.11-slim'; args '--network host' }
+                docker { image 'python:3.12-slim'; args '--network host' }
             }
             steps {
                 withCredentials([file(credentialsId: "${GDRIVE_CREDENTIALS_ID}", variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
@@ -104,7 +98,7 @@ pipeline {
 
         stage('Integration Tests') {
             agent {
-                docker { image 'python:3.11-slim'; args '--network host' }
+                docker { image 'python:3.12-slim'; args '--network host' }
             }
             steps {
                 withCredentials([file(credentialsId: "${GDRIVE_CREDENTIALS_ID}", variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {

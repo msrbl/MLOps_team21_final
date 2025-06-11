@@ -1,5 +1,5 @@
 import logging
-import joblib as jl
+import joblib 
 import math
 import pandas as pd
 
@@ -9,7 +9,7 @@ logger = logging.getLogger("app")
 
 
 def proceed_testing(test_X_path, test_y_path, model_path):
-    model = jl.load(model_path)
+    model = joblib.load(model_path)
 
     X_test = pd.read_csv(test_X_path)
     y_test = pd.read_csv(test_y_path).squeeze()

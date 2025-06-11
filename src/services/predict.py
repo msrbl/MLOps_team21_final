@@ -1,4 +1,4 @@
-import joblib as jl
+import joblib 
 import pandas as pd
 
 from typing import Union
@@ -45,7 +45,7 @@ def predict_passenger(
         ]
     )
 
-    model = jl.load(settings.MODEL_PATH)
+    model = joblib.load(settings.MODEL_PATH)
 
     prediction = model.predict(data)[0]
     return prediction
