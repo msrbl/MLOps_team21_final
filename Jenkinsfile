@@ -1,13 +1,11 @@
 pipeline {
     agent none
 
-    options {
-        ansiColor('xterm')
-        timestamps()
-        disableConcurrentBuilds()
-        skipStagesAfterUnstable()
-        buildDiscarder(logRotator(numToKeepStr: '10'))
-    }
+    // options {
+    //     timestamps()
+    //     disableConcurrentBuilds()
+    //     skipStagesAfterUnstable()
+    // }
 
     environment {
         DOCKER_IMAGE_NAME = 'team21/model'
@@ -39,9 +37,6 @@ pipeline {
                            -v $HOME/.cache/pip:/root/.cache/pip'
                 }
             }
-            options {
-                cache(paths: ['venv/', '/root/.cache/pip'], key: "pip-${env.GIT_COMMIT}")
-            }
             steps {
                 sh '''
                     python -m venv venv
@@ -50,7 +45,6 @@ pipeline {
                     pip install -r requirements.txt
                     pip install -e .
                 '''
-                stash includes: 'venv/**', name: 'venv'
             }
         }
 
@@ -61,8 +55,8 @@ pipeline {
                         docker { image 'python:3.11-slim'; args '--network host' }
                     }
                     steps {
-                        unstash 'venv'
                         sh '''
+                            set -e
                             . venv/bin/activate
                             black src tests
                         '''
@@ -74,9 +68,9 @@ pipeline {
                         docker { image 'python:3.11-slim'; args '--network host' }
                     }
                     steps {
-                        unstash 'venv'
                         withCredentials([file(credentialsId: "${GDRIVE_CREDENTIALS_ID}", variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
                             sh '''
+                                set -e
                                 . venv/bin/activate
                                 dvc pull --jobs 4
                                 pytest --maxfail=1 --disable-warnings -q /tests/test_data_quality.py
@@ -92,9 +86,9 @@ pipeline {
                 docker { image 'python:3.11-slim'; args '--network host' }
             }
             steps {
-                unstash 'venv'
                 withCredentials([file(credentialsId: "${GDRIVE_CREDENTIALS_ID}", variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
                     sh '''
+                        set -e
                         . venv/bin/activate
                         dvc pull --jobs 4
                         python -m src.services.model_pipeline.pipeline
@@ -113,9 +107,9 @@ pipeline {
                 docker { image 'python:3.11-slim'; args '--network host' }
             }
             steps {
-                unstash 'venv'
                 withCredentials([file(credentialsId: "${GDRIVE_CREDENTIALS_ID}", variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
                     sh '''
+                        set -e
                         . venv/bin/activate
                         dvc pull --jobs 4
                         pytest --maxfail=1 --disable-warnings -q /tests/test_endpoints.py
