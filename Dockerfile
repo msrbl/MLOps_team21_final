@@ -11,4 +11,5 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 COPY . .
 
+EXPOSE 8000
 CMD ["sh", "-c", "dvc pull && uvicorn src:app --host 0.0.0.0 --port 8000"]
