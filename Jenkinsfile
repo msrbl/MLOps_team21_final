@@ -1,61 +1,98 @@
 pipeline {
-    agent {
-        docker {
-        image 'python:3.11-slim'
-        args  '--network host \
-                --user 0:0 \
-                -e HOME=/root \
-                -v /var/run/docker.sock:/var/run/docker.sock'
-        }
+    agent none
+
+    options {
+        ansiColor('xterm')
+        timestamps()
+        disableConcurrentBuilds()
+        skipStagesAfterUnstable()
+        buildDiscarder(logRotator(numToKeepStr: '10'))
     }
 
     environment {
-        HOME              = '/root'  
         DOCKER_IMAGE_NAME = 'team21/model'
         DOCKER_IMAGE_TAG  = "${env.BUILD_NUMBER}"
         DOCKER_REGISTRY   = 'docker.io'
+
+        GDRIVE_CREDENTIALS_ID = 'gdrive-sa'
     }
+
     stages {
-        stage('Setup Python venv') {
+
+        stage('Checkout') {
+            agent any
             steps {
-                sh '''
-                    set -e
-                    python -m venv venv
-                    . venv/bin/activate
-                    pip install --upgrade pip --no-cache-dir
-                    pip install -r requirements.txt --no-cache-dir
-                    pip install --no-cache-dir -e .
-                '''
+                checkout scm
             }
         }
 
-        // stage('Lint') {
-        //     steps {
-        //         echo '=== Running Linting ==='
-        //         withCredentials([file(credentialsId: 'gdrive-sa', variable: 'SA_JSON')]) {
-        //             sh '''
-        //                 set -e
-        //                 . venv/bin/activate
+        stage('Setup & Cache') {
+            agent {
+                docker {
+                    image 'python:3.11-slim'
+                    args  '--network host \
+                           -v $HOME/.cache/pip:/root/.cache/pip'
+                }
+            }
+            options {
+                cache(paths: ['venv/', '/root/.cache/pip'], key: "pip-${env.GIT_COMMIT}")
+            }
+            steps {
+                sh '''
+                    python -m venv venv
+                    . venv/bin/activate
+                    pip install --upgrade pip
+                    pip install -r requirements.txt
+                    pip install -e .
+                '''
+                stash includes: 'venv/**', name: 'venv'
+            }
+        }
 
-        //                 black src tests
-        //                 mypy src tests
-        //             '''
-        //         }
-        //     }
-        // }
+        stage('Lint & Test') {
+            parallel {
+                stage('Lint') {
+                    agent {
+                        docker { image 'python:3.11-slim'; args '--network host' }
+                    }
+                    steps {
+                        unstash 'venv'
+                        sh '''
+                            . venv/bin/activate
+                            black src tests
+                            mypy src tests
+                        '''
+                    }
+                }
+                stage('Unit Tests') {
+                    agent {
+                        docker { image 'python:3.11-slim'; args '--network host' }
+                    }
+                    steps {
+                        unstash 'venv'
+                        withCredentials([file(credentialsId: "${GDRIVE_CREDENTIALS_ID}", variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
+                            sh '''
+                                . venv/bin/activate
+                                dvc pull --jobs 4
+                                pytest --maxfail=1 --disable-warnings -q /tests/test_data_quality.py
+                            '''
+                        }
+                    }
+                }
+            }
+        }
 
         stage('Train Model') {
+            agent {
+                docker { image 'python:3.11-slim'; args '--network host' }
+            }
             steps {
-                echo '=== Training Model ==='
-                withCredentials([file(credentialsId: 'gdrive-sa', variable: 'SA_JSON')]) {
+                unstash 'venv'
+                withCredentials([file(credentialsId: "${GDRIVE_CREDENTIALS_ID}", variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
                     sh '''
-                        set -e
                         . venv/bin/activate
-                        
-                        dvc remote modify --local myremote gdrive_service_account_json_file_path "$SA_JSON"
-                        dvc pull
+                        dvc pull --jobs 4
                         python -m src.services.model_pipeline.pipeline
-
                     '''
                 }
             }
@@ -66,54 +103,47 @@ pipeline {
             }
         }
 
-        stage('Test') {
+        stage('Integration Tests') {
+            agent {
+                docker { image 'python:3.11-slim'; args '--network host' }
+            }
             steps {
-                echo '=== Running Tests ==='
-                withCredentials([file(credentialsId: 'gdrive-sa', variable: 'SA_JSON')]) {
+                unstash 'venv'
+                withCredentials([file(credentialsId: "${GDRIVE_CREDENTIALS_ID}", variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
                     sh '''
-                        set -e
                         . venv/bin/activate
-                        
-                        dvc remote modify --local myremote gdrive_service_account_json_file_path "$SA_JSON"
-                        dvc pull
-                        pytest tests/
-
+                        dvc pull --jobs 4
+                        pytest --maxfail=1 --disable-warnings -q /tests/test_endpoints.py
                     '''
                 }
             }
         }
 
-        stage('Build Docker Image') {
-            steps {
-                script {
-                    docker.image('docker:24').inside(
-                        '--network host -e HOME=/root -v /var/run/docker.sock:/var/run/docker.sock'
-                    ) {
-                        sh "docker build -t ${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG} ."
-                    }
+        stage('Build & Push Docker') {
+            agent {
+                docker {
+                    image 'docker:23.0-dind'
+                    args  '--privileged --network host'
                 }
             }
-        }
-        stage('Deploy') {
-             steps {
+            steps {
                 script {
-                    docker.image('docker:24').inside(
-                        '--network host -e HOME=/root -v /var/run/docker.sock:/var/run/docker.sock'
-                    ) {
-                        docker.withRegistry("https://${DOCKER_REGISTRY}", 'docker-credentials') {
-                            sh "docker push ${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}"
-                            sh """
-                                docker tag ${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG} \
-                                        ${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:latest
-                                docker push ${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:latest
-                            """
-                        }
+                    docker.withRegistry("https://${DOCKER_REGISTRY}", "${DOCKER_CREDENTIALS_ID}") {
+                        def img = docker.build("${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}")
+                        img.push()
+                        img.push('latest')
                     }
                 }
             }
         }
     }
     post {
+        success {
+            echo '✅ Сборка успешно завершена'
+        }
+        failure {
+            echo '❌ Сборка упала'
+        }
         always {
             archiveArtifacts artifacts: 'data/processed/**/*', fingerprint: true
         }
