@@ -23,7 +23,7 @@ FastAPI-сервис, который по пассажирским данным 
 ## 🖥 Local setup & run
 
 ```bash
-git clone https://github.com/your-org/MLOps_team21_final.git
+git clone https://github.com/restfulpanda/MLOps_team21_final.git
 cd MLOps_team21_final
 
 # 1. Python venv
@@ -38,7 +38,7 @@ export DVC_REMOTE_GDRIVE_GDRIVE_USE_SERVICE_ACCOUNT=true
 export DVC_REMOTE_GDRIVE_GDRIVE_SERVICE_ACCOUNT_JSON_FILE_PATH="$(pwd)/service_account.json"
 dvc pull                   # ~200 MB
 
-# 3. Проверяем всё
+# 3. Форматируем и проходим линтером
 black --check src tests
 mypy src tests
 pytest -q
@@ -100,4 +100,4 @@ docker run -d -p 8000:8000 \
 | **mypy**         | 0 errors                            |
 | **black**        | 100 % formatted                     |
 | **pytest**       | 27 passed                           |
-| **Docker image** | `docker.io/team21/model:⟨build-id⟩` |
+| **Docker image** | `docker.io/restfulpanda/model:⟨build-id⟩` |
